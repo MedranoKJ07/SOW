@@ -1,44 +1,56 @@
-# Informe final de recuperación de Git
+# Informe de recuperación de Git
 
-Fecha: 2026-08-20
+Fecha de reconstrucción: 2026-08-20
 
-## Motivo y preservación
+## Motivo de la reinicialización
 
-La carpeta `.git` original no estaba disponible. La raíz correcta es `C:/Users/kmuri/Downloads/download/htdocs/sow/Optica`. Antes de inicializar Git se creó una copia exacta de 917 archivos en `C:/Users/kmuri/Downloads/Optica-preservation-20260820`.
+La carpeta `.git` original no estaba disponible. El estado actual fue preservado antes de continuar en `C:/Users/kmuri/Downloads/download/htdocs/sow/Optica-preservation-20260820`.
 
 ## Evidencia revisada
 
-Se revisaron la raíz, la carpeta superior, `download.zip`, los SQL adyacentes, los diagramas `.mwb`/`.bak` y las ubicaciones de trabajo relacionadas. `download.zip` contiene exactamente los 917 archivos de la raíz bajo `htdocs/sow/Optica`; la comparación SHA-256 encontró cero agregados, eliminados o modificados. No se encontró `.git`, bundle, parche, diff ni snapshot anterior con diferencias verificables.
+- Estado de trabajo del proyecto en `C:/Users/kmuri/Downloads/download/htdocs/sow/Optica`.
+- `C:/Users/kmuri/Downloads/download.zip`, cuya copia de `htdocs/sow/Optica` coincide con el estado final.
+- Copias de preservación y directorios de inspección encontrados en `C:/Users/kmuri/Downloads`.
+- SQL adyacentes en `C:/Users/kmuri/Downloads/download/htdocs/sow`.
+- Diagramas MySQL `.mwb` y `.mwb.bak` del proyecto.
+- Búsqueda de `.git`, bundles, parches, diffs y copias con diferencias verificables dentro de las ubicaciones relacionadas.
 
-## Historial reconstruido
+## Historial recuperado
 
-No fue posible recuperar commits, fechas, ramas, mensajes ni autoría originales. Por ello no se dividió artificialmente el árbol por módulos o personas.
+No se recuperaron commits originales ni una cadena de snapshots. La comparación disponible no mostró archivos agregados, eliminados o modificados entre el ZIP y el estado de trabajo. Las fechas de copia/extracción no prueban fechas de commits originales.
 
-| Commit | Autor | Mensaje | Alcance |
-| --- | --- | --- | --- |
-| `e6ce2dc` | Git Reconstruction `<reconstruction@local.invalid>` | `chore(project): restaurar código fuente después de pérdida del historial Git` | Baseline único del estado recuperable |
-| `f1af308` | Git Reconstruction `<reconstruction@local.invalid>` | `docs(git-recovery): documentar auditoría y estado reconstruido` | Documentación de recuperación |
-| `b6a4dfd` | Git Reconstruction `<reconstruction@local.invalid>` | `chore(project): restaurar código fuente después de pérdida del historial Git` | Actualización documental generada durante la recuperación |
+Por esa razón, el repositorio contiene un único commit baseline de código:
 
-Solo `e6ce2dc` representa el código fuente recuperado; los commits posteriores documentan el proceso y no pretenden simular etapas de desarrollo.
+`chore(project): restaurar código fuente después de pérdida del historial Git`
+
+Este commit representa el estado final recuperable y no atribuye cambios a una persona concreta. Después se añadieron commits de documentación de recuperación; no representan versiones históricas del código.
+
+Commits presentes en la reconstrucción:
+
+- `e6ce2dc` — baseline neutral del código recuperable.
+- `f1af308` — documentación inicial de auditoría y estado reconstruido.
+- `b6a4dfd` — consolidación del informe final de recuperación.
+- `7e7a775` — aclaración del informe y alineación de las ramas de desarrollo con `main`.
 
 ## Autoría
 
-No existe evidencia suficiente para atribuir cambios individuales a Kerlint, Celeste, Eduardo o Cristopher. La identidad Git usada es neutral y está configurada únicamente a nivel local del repositorio; no se usó `git config --global`.
+No existe metadata suficiente para verificar autoría individual de Kerlint, Celeste, Eduardo o Cristopher. Se utilizó la identidad local neutral `Git Reconstruction <reconstruction@local.invalid>`.
 
 ## Seguridad y dependencias
 
-Se detectó configuración SMTP y local sensible en `conexion.php`, `config.php`, `probar_mail.php`, `includes/mailer.php` y `cliente/mailer.php`. Permanecen en el entorno local y en la copia de preservación, pero están excluidos mediante `.gitignore`. Se añadió `.env.example` sin valores reales. `composer.json` y `composer.lock` se conservaron; `vendor/`, SQL locales, logs y backups se excluyen del historial.
+`conexion.php`, `config.php` y archivos de correo contienen configuración local o sensible y fueron excluidos mediante `.gitignore`. Se añadió `.env.example` sin credenciales reales. `composer.json` y `composer.lock` se conservaron; `vendor/` se excluyó como dependencia instalada.
 
-Validaciones: lint PHP sin errores en 73 archivos rastreados; `composer.json` válido, con advertencia no bloqueante por licencia no declarada. Deben rotarse credenciales si fueron reales y migrarse a variables de entorno antes de publicar.
+## Estado y ramas
 
-## Ramas y publicación
-
-La rama principal es `main`. Las ramas de continuación existentes apuntan al estado de `main`:
+La rama principal es `main`. Las ramas de continuación se crearon desde el estado final de `main`:
 
 - `dev/kerlint-database`
 - `dev/celeste-auth`
 - `dev/eduardo-clinical`
 - `dev/cristopher-admin`
 
-No se ejecutó `git push` ni `git push --force`.
+No se realizó ni se realizará `git push` durante esta recuperación.
+
+## Limitaciones
+
+No fue posible recuperar mensajes, fechas, hashes, ramas ni autoría del repositorio perdido. Los commits futuros sí deberán corresponder a cambios reales y verificables.
