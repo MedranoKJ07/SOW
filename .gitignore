@@ -1,0 +1,25 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+conexion.php
+config.php
+probar_mail.php
+includes/mailer.php
+cliente/mailer.php
+
+# Installed dependencies and runtime output
+vendor/
+*.log
+
+# IDE and operating-system files
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Local database exports and temporary files
+*.sql
+*.sql.gz
+*.tmp
+*.bak
