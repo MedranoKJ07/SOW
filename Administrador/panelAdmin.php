@@ -1,15 +1,13 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
+secure_session_start();
 
 // Incluimos configuración y conexión
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../conexion.php';
 
 // Validar sesión y rol
-if (!isset($_SESSION['usuario']) || ($_SESSION['rol'] ?? '') !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit;
-}
+require_role(['admin']);
 
 // Conexión
 $conn = conectarDB();

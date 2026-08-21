@@ -1,15 +1,13 @@
 <?php
 // Administrador/usuarios.php  — CRUD LISTADO con MySQLi
-session_start();
+require_once __DIR__ . '/../includes/security.php';
+secure_session_start();
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../conexion.php';
 
 // --- Seguridad: solo Admin ---
-if (!isset($_SESSION['usuario']) || ($_SESSION['rol'] ?? '') !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit;
-}
+require_role(['admin']);
 
 // --- Conexión ---
 $conn = conectarDB();
@@ -18,10 +16,7 @@ if (!$conn) {
 }
 
 // --- Token CSRF ---
-if (empty($_SESSION['csrf'])) {
-    $_SESSION['csrf'] = bin2hex(random_bytes(32));
-}
-$csrf = $_SESSION['csrf'];
+$csrf = csrf_token('admin-users');
 
 // --- Filtros (busqueda + rol) ---
 $q = trim($_GET['q'] ?? '');
@@ -34,7 +29,7 @@ if ($r !== '' && !in_array($r, $validRoles, true)) {
 // --- Eliminar usuario ---
 $flash = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delete') {
-    if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
+    if (!csrf_valid($_POST['csrf'] ?? '', 'admin-users')) {
         $flash = 'Token inválido. Inténtalo de nuevo.';
     } else {
         $id = (int)($_POST['id'] ?? 0);

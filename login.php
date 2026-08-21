@@ -1,6 +1,7 @@
 <?php
 // login.php
-session_start();
+require_once __DIR__ . '/includes/security.php';
+secure_session_start();
 require_once __DIR__ . '/conexion.php';
 require_once __DIR__ . '/vendor/autoload.php'; // PHPMailer
 require_once __DIR__ . '/includes/auth_helpers.php';
