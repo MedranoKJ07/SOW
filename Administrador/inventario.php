@@ -11,19 +11,23 @@ $conn = conectarDB();
 // Resumen general
 $sql = "
   SELECT producto,
-         SUM(cantidad) AS total_unidades,
-         AVG(costo_unitario) AS costo_promedio,
-         SUM(cantidad * costo_unitario) AS valor_total
+         COALESCE(SUM(cantidad), 0) AS total_unidades,
+         COALESCE(AVG(costo_unitario), 0) AS costo_promedio,
+         COALESCE(SUM(cantidad * costo_unitario), 0) AS valor_total
   FROM detalle_compra
   GROUP BY producto
-  ORDER BY total_unidades DESC
+  HAVING SUM(cantidad) > 0
+  ORDER BY valor_total DESC, producto ASC
+  LIMIT 1000
 ";
 $res = $conn->query($sql);
 
 // KPIs
 $kpi = ['productos'=>0,'unidades'=>0,'valor'=>0.0];
 $data = [];
-if ($res && $res->num_rows) {
+if (!$res) {
+  error_log('Inventario: consulta fallida: ' . $conn->error);
+} elseif ($res->num_rows) {
   while($r=$res->fetch_assoc()){
     $data[] = $r;
     $kpi['productos']++;

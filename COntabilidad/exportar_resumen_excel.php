@@ -7,26 +7,35 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 $conn = conectarDB();
 
-$mes = $_GET['mes'] ?? date('m');
-$anio = $_GET['anio'] ?? date('Y');
+$mes = filter_var($_GET['mes'] ?? date('m'), FILTER_VALIDATE_INT);
+$anio = filter_var($_GET['anio'] ?? date('Y'), FILTER_VALIDATE_INT);
+$mes = ($mes !== false && $mes >= 1 && $mes <= 12) ? $mes : (int)date('m');
+$anio = ($anio !== false && $anio >= 2000 && $anio <= 2100) ? $anio : (int)date('Y');
 
 // ========= INGRESOS =========
-$pagos = $conn->query("
+$stmtPagos = $conn->prepare("
     SELECT p.monto, p.fecha_pago, p.metodo_pago, f.id AS factura_id, pa.nombre AS cliente
     FROM pagos p
     JOIN facturas f ON p.factura_id = f.id
     JOIN pacientes pa ON f.paciente_id = pa.id
-    WHERE MONTH(p.fecha_pago) = $mes AND YEAR(p.fecha_pago) = $anio
-");
 
-$facturas_directas = $conn->query("
+    WHERE MONTH(p.fecha_pago) = ? AND YEAR(p.fecha_pago) = ?
+");
+$stmtPagos->bind_param('ii', $mes, $anio);
+$stmtPagos->execute();
+$pagos = $stmtPagos->get_result();
+
+$stmtFacturas = $conn->prepare("
     SELECT f.fecha, f.total, pa.nombre AS cliente
     FROM facturas f
     JOIN pacientes pa ON f.paciente_id = pa.id
     WHERE f.estado_pago = 'pagado' AND f.deuda = 0
     AND f.id NOT IN (SELECT factura_id FROM pagos)
-    AND MONTH(f.fecha) = $mes AND YEAR(f.fecha) = $anio
+    AND MONTH(f.fecha) = ? AND YEAR(f.fecha) = ?
 ");
+$stmtFacturas->bind_param('ii', $mes, $anio);
+$stmtFacturas->execute();
+$facturas_directas = $stmtFacturas->get_result();
 
 $total_pagos = 0;
 $detalle_pagos = [];
@@ -45,21 +54,27 @@ while ($row = $facturas_directas->fetch_assoc()) {
 $ingresos = $total_pagos + $total_directas;
 
 // ========= EGRESOS =========
-$egresos = $conn->query("
+$stmtEgresos = $conn->prepare("
     SELECT SUM(monto) AS total
     FROM movimientos_caja
     WHERE tipo = 'Egreso' AND id_gasto IS NOT NULL
-    AND MONTH(fecha) = $mes AND YEAR(fecha) = $anio
-")->fetch_assoc()['total'] ?? 0;
+    AND MONTH(fecha) = ? AND YEAR(fecha) = ?
+");
+$stmtEgresos->bind_param('ii', $mes, $anio);
+$stmtEgresos->execute();
+$egresos = $stmtEgresos->get_result()->fetch_assoc()['total'] ?? 0;
 
 // ========= COMPRAS DETALLADAS =========
-$compras = $conn->query("
+$stmtCompras = $conn->prepare("
     SELECT c.fecha, pr.nombre AS proveedor, dc.producto, dc.cantidad, dc.costo_unitario
     FROM compras c
     JOIN proveedores pr ON c.id_proveedor = pr.id_proveedor
     JOIN detalle_compra dc ON dc.id_compra = c.id_compra
-    WHERE MONTH(c.fecha) = $mes AND YEAR(c.fecha) = $anio
+    WHERE MONTH(c.fecha) = ? AND YEAR(c.fecha) = ?
 ");
+$stmtCompras->bind_param('ii', $mes, $anio);
+$stmtCompras->execute();
+$compras = $stmtCompras->get_result();
 
 
 

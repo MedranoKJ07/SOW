@@ -12,6 +12,7 @@ $conn = conectarDB();
 $paciente = null;
 $historial = null;
 $deuda = 0.00;
+$factura_error = '';
 
 // Buscar paciente y traer último historial clínico
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['paciente_nombre'])) {
@@ -48,18 +49,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['paciente_nombre'])) {
 
 // Crear factura
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_factura'])) {
-    $paciente_id = $_POST['paciente_id'];
-    $fecha = $_POST['fecha'];
-    $total = floatval($_POST['total']);
-    $deuda = floatval($_POST['deuda']);
-    $tipo_pago = $_POST['tipo_pago'];
+    $paciente_id = (int)($_POST['paciente_id'] ?? 0);
+    $fecha = trim($_POST['fecha'] ?? '');
+    $total = filter_var($_POST['total'] ?? null, FILTER_VALIDATE_FLOAT);
+    $deuda = filter_var($_POST['deuda'] ?? null, FILTER_VALIDATE_FLOAT);
+    $tipo_pago = $_POST['tipo_pago'] ?? '';
 
-    if ($tipo_pago === 'abono' && isset($_POST['abono'])) {
-        $abono = floatval($_POST['abono']);
+    $date = DateTime::createFromFormat('!Y-m-d', $fecha);
+    $validDate = $date !== false && $date->format('Y-m-d') === $fecha;
+    $patientStmt = $conn->prepare('SELECT 1 FROM pacientes WHERE id = ? LIMIT 1');
+    $patientStmt->bind_param('i', $paciente_id);
+    $patientStmt->execute();
+    $patientExists = (bool)$patientStmt->get_result()->fetch_row();
+
+    if (!$patientExists || !$validDate) {
+        $factura_error = 'Paciente o fecha inválidos.';
+    } elseif ($total === false || $total < 0) {
+        $factura_error = 'El total debe ser un monto válido no negativo.';
+    } elseif ($deuda === false || $deuda < 0) {
+        $factura_error = 'La deuda debe ser un monto válido no negativo.';
+    } elseif (!in_array($tipo_pago, ['completo', 'abono'], true)) {
+        $factura_error = 'Tipo de pago inválido.';
+    }
+
+    if ($factura_error === '' && $tipo_pago === 'abono' && isset($_POST['abono'])) {
+        $abono = filter_var($_POST['abono'], FILTER_VALIDATE_FLOAT);
+        if ($abono === false || $abono < 0 || $abono > $total) {
+            $factura_error = 'El abono debe estar entre cero y el total.';
+        }
+    }
+    if ($factura_error === '' && $tipo_pago === 'abono') {
         $deuda = $total - $abono;
     }
 
-    $estado_pago = ($deuda <= 0) ? 'pagado' : 'pendiente';
+    if ($factura_error === '') {
+      $estado_pago = ($deuda <= 0) ? 'pagado' : 'pendiente';
 
     // Tomar los datos clínicos del último historial
     $tipo_lente = $_POST['tipo_lente'] ?? null;
@@ -95,14 +119,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_factura'])) {
         $total, $deuda, $estado_pago
     );
 
-    $stmt_factura->execute();
-    $factura_id = $conn->insert_id;
+    if (!$stmt_factura->execute()) {
+        $factura_error = 'No fue posible crear la factura.';
+    } else {
+      $factura_id = $conn->insert_id;
 
-    echo "<script>
+      echo "<script>
         alert('Factura creada correctamente');
         window.location.href = 'imprimir_factura.php?id=$factura_id';
-    </script>";
-    exit;
+      </script>";
+      exit;
+    }
+    }
 }
 ?>
 
@@ -114,6 +142,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['crear_factura'])) {
     <link rel="stylesheet" href="estilos_factura.css">
 </head>
 <body>
+<?php if ($factura_error !== ''): ?>
+  <div role="alert" style="max-width:700px;margin:15px auto;padding:10px;background:#fee2e2;color:#991b1b;">
+    <?= htmlspecialchars($factura_error, ENT_QUOTES, 'UTF-8') ?>
+  </div>
+<?php endif; ?>
 <a href="panel_secretaria.php">← Volver al panel</a>
 <div class="container">
     <h2>Buscar Paciente</h2>
