@@ -30,6 +30,7 @@ Commits presentes en la reconstrucción:
 - `e6ce2dc` — baseline neutral del código recuperable.
 - `f1af308` — documentación inicial de auditoría y estado reconstruido.
 - `b6a4dfd` — consolidación del informe final de recuperación.
+- `7e7a775` — aclaración del informe y alineación de las ramas de desarrollo con `main`.
 
 ## Autoría
 
