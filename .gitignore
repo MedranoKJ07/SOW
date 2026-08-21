@@ -2,8 +2,6 @@
 .env
 .env.*
 !.env.example
-conexion.php
-config.php
 probar_mail.php
 includes/mailer.php
 cliente/mailer.php
