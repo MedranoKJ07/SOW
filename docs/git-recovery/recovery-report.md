@@ -19,11 +19,17 @@ La carpeta `.git` original no estaba disponible. El estado actual fue preservado
 
 No se recuperaron commits originales ni una cadena de snapshots. La comparación disponible no mostró archivos agregados, eliminados o modificados entre el ZIP y el estado de trabajo. Las fechas de copia/extracción no prueban fechas de commits originales.
 
-Por esa razón, el repositorio contiene un único commit baseline:
+Por esa razón, el repositorio contiene un único commit baseline de código:
 
 `chore(project): restaurar código fuente después de pérdida del historial Git`
 
-Este commit representa el estado final recuperable y no atribuye cambios a una persona concreta.
+Este commit representa el estado final recuperable y no atribuye cambios a una persona concreta. Después se añadieron commits de documentación de recuperación; no representan versiones históricas del código.
+
+Commits presentes en la reconstrucción:
+
+- `e6ce2dc` — baseline neutral del código recuperable.
+- `f1af308` — documentación inicial de auditoría y estado reconstruido.
+- `b6a4dfd` — consolidación del informe final de recuperación.
 
 ## Autoría
 
@@ -35,7 +41,7 @@ No existe metadata suficiente para verificar autoría individual de Kerlint, Cel
 
 ## Estado y ramas
 
-La rama principal es `main`. Después del baseline se crearán las ramas de continuación:
+La rama principal es `main`. Las ramas de continuación se crearon desde el estado final de `main`:
 
 - `dev/kerlint-database`
 - `dev/celeste-auth`
