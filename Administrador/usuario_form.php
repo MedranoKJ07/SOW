@@ -1,23 +1,20 @@
 <?php
 // Administrador/usuario_form.php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
+secure_session_start();
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../conexion.php';
 
 // --- Seguridad ---
-if (!isset($_SESSION['usuario']) || ($_SESSION['rol'] ?? '') !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit;
-}
+require_role(['admin']);
 
 $conn = conectarDB();
 if (!$conn) { die('Error de conexión'); }
 $conn->set_charset('utf8mb4'); // importante para la ñ
 
 // --- CSRF ---
-if (empty($_SESSION['csrf'])) { $_SESSION['csrf'] = bin2hex(random_bytes(32)); }
-$csrf = $_SESSION['csrf'];
+$csrf = csrf_token('admin-user-form');
 
 // --- Datos base ---
 $id = (int)($_GET['id'] ?? 0);
@@ -49,7 +46,7 @@ $ok = false;
 
 // --- Guardar cambios ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!hash_equals($csrf, $_POST['csrf'] ?? '')) {
+    if (!csrf_valid($_POST['csrf'] ?? '', 'admin-user-form')) {
         $errores[] = 'Token inválido, recarga la página.';
     } else {
         $nombre  = trim($_POST['nombre'] ?? '');
