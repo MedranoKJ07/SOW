@@ -6,6 +6,7 @@ if (!isset($_SESSION['usuario']) || $_SESSION['rol'] !== 'secretaria') {
 }
 
 include_once 'conexion.php';
+require_once __DIR__ . '/includes/clinical_validation.php';
 $conn = conectarDB();
 
 $id = $_GET['id'] ?? null;
@@ -27,17 +28,31 @@ if (!$cita) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $fecha = $_POST['fecha'];
-    $hora = $_POST['hora'];
-    $motivo = $_POST['motivo'];
+    $fecha = trim($_POST['fecha'] ?? '');
+    $hora = trim($_POST['hora'] ?? '');
+    $motivo = clinical_text((string)($_POST['motivo'] ?? ''));
 
-    $stmt = $conn->prepare("UPDATE citas_medicas SET fecha = ?, hora = ?, motivo = ? WHERE id = ?");
-    $stmt->bind_param("sssi", $fecha, $hora, $motivo, $id);
-
-    if ($stmt->execute()) {
-        $mensaje = "✅ Cita actualizada correctamente.";
+    if (!clinical_valid_date($fecha) || !clinical_valid_time($hora) || $motivo === '') {
+        $mensaje = "❌ Fecha, hora y motivo son obligatorios y deben ser válidos.";
     } else {
-        $mensaje = "❌ Error al actualizar la cita.";
+        $dup = $conn->prepare("SELECT id FROM citas_medicas WHERE fecha = ? AND hora = ? AND id <> ? LIMIT 1");
+        $dup->bind_param("ssi", $fecha, $hora, $id);
+        $dup->execute();
+
+        if ($dup->get_result()->num_rows > 0) {
+            $mensaje = "❌ Ya existe otra cita para esa fecha y hora.";
+        } else {
+            $stmt = $conn->prepare("UPDATE citas_medicas SET fecha = ?, hora = ?, motivo = ? WHERE id = ?");
+            $stmt->bind_param("sssi", $fecha, $hora, $motivo, $id);
+
+            if ($stmt->execute()) {
+                $mensaje = "✅ Cita actualizada correctamente.";
+            } else {
+                $mensaje = "❌ Error al actualizar la cita.";
+            }
+            $stmt->close();
+        }
+        $dup->close();
     }
 }
 ?>

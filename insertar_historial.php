@@ -1,5 +1,6 @@
 <?php
 include_once 'conexion.php';
+require_once __DIR__ . '/includes/clinical_validation.php';
 $conn = conectarDB();
 
 // Obtener lista de pacientes para el select
@@ -11,8 +12,17 @@ while ($row = $result->fetch_assoc()) {
 
 // Procesar el formulario
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $paciente_id = $_POST['paciente_id'];
-    $fecha = $_POST['fecha'];
+    $paciente_id = (int)($_POST['paciente_id'] ?? 0);
+    $fecha = trim($_POST['fecha'] ?? '');
+
+    if (!clinical_patient_exists($conn, $paciente_id)) {
+        http_response_code(422);
+        exit('El paciente seleccionado no existe.');
+    }
+    if (!clinical_valid_date($fecha)) {
+        http_response_code(422);
+        exit('La fecha clínica no es válida.');
+    }
 
     $tipo_lente_array = $_POST['tipo_lente'] ?? [];
     $tipo_lente = implode(', ', $tipo_lente_array);
