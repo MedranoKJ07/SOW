@@ -25,12 +25,7 @@ Por esa razón, el repositorio contiene un único commit baseline de código:
 
 Este commit representa el estado final recuperable y no atribuye cambios a una persona concreta. Después se añadieron commits de documentación de recuperación; no representan versiones históricas del código.
 
-Commits presentes en la reconstrucción:
-
-- `e6ce2dc` — baseline neutral del código recuperable.
-- `f1af308` — documentación inicial de auditoría y estado reconstruido.
-- `b6a4dfd` — consolidación del informe final de recuperación.
-- `7e7a775` — aclaración del informe y alineación de las ramas de desarrollo con `main`.
+El historial visible incluye el baseline neutral del código recuperable y varios commits posteriores de documentación de recuperación. Los commits documentales no representan versiones históricas del código.
 
 ## Autoría
 
