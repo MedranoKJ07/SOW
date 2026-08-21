@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario']) || $_SESSION['rol'] !== 'secretaria') {
 }
 
 include 'conexion.php';
+require_once __DIR__ . '/includes/clinical_validation.php';
 $conn = conectarDB();
 
 $mensaje = '';
@@ -19,32 +20,42 @@ while ($fila = $resultado->fetch_assoc()) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $paciente_id = $_POST['paciente_id'];
-    $fecha = $_POST['fecha'];
-    $hora = $_POST['hora'];
-    $motivo = $_POST['motivo'];
+    $paciente_id = (int)($_POST['paciente_id'] ?? 0);
+    $fecha = trim($_POST['fecha'] ?? '');
+    $hora = trim($_POST['hora'] ?? '');
+    $motivo = clinical_text((string)($_POST['motivo'] ?? ''));
 
-    // Verificar si ya hay una cita a esa fecha y hora
-    $stmtCheck = $conn->prepare("SELECT id FROM citas_medicas WHERE fecha = ? AND hora = ?");
-    $stmtCheck->bind_param("ss", $fecha, $hora);
-    $stmtCheck->execute();
-    $resultado = $stmtCheck->get_result();
-
-    if ($resultado->num_rows > 0) {
-        $mensaje = "❌ Ya existe una cita agendada para esa fecha y hora. Elige otro horario.";
-    } else {
-        $stmt = $conn->prepare("INSERT INTO citas_medicas (paciente_id, fecha, hora, motivo) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isss", $paciente_id, $fecha, $hora, $motivo);
-
-        if ($stmt->execute()) {
-            $mensaje = "✅ Cita agendada exitosamente.";
-        } else {
-            $mensaje = "❌ Error al agendar la cita.";
-        }
-        $stmt->close();
+    if (!clinical_patient_exists($conn, $paciente_id)) {
+        $mensaje = "❌ El paciente seleccionado no existe.";
+    } elseif (!clinical_valid_date($fecha) || !clinical_valid_time($hora)) {
+        $mensaje = "❌ La fecha o la hora no tienen un formato válido.";
+    } elseif ($motivo === '') {
+        $mensaje = "❌ El motivo de la cita es obligatorio.";
     }
 
-    $stmtCheck->close();
+    if ($mensaje === '') {
+        // Verificar si ya hay una cita a esa fecha y hora.
+        $stmtCheck = $conn->prepare("SELECT id FROM citas_medicas WHERE fecha = ? AND hora = ? LIMIT 1");
+        $stmtCheck->bind_param("ss", $fecha, $hora);
+        $stmtCheck->execute();
+        $resultado = $stmtCheck->get_result();
+
+        if ($resultado->num_rows > 0) {
+            $mensaje = "❌ Ya existe una cita agendada para esa fecha y hora. Elige otro horario.";
+        } else {
+            $stmt = $conn->prepare("INSERT INTO citas_medicas (paciente_id, fecha, hora, motivo) VALUES (?, ?, ?, ?)");
+            $stmt->bind_param("isss", $paciente_id, $fecha, $hora, $motivo);
+
+            if ($stmt->execute()) {
+                $mensaje = "✅ Cita agendada exitosamente.";
+            } else {
+                $mensaje = "❌ Error al agendar la cita.";
+            }
+            $stmt->close();
+        }
+
+        $stmtCheck->close();
+    }
     $conn->close();
 }
 ?>
